@@ -1,0 +1,8 @@
+{
+  "name": "TaxiChat",
+  "short_name": "TaxiChat",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111116",
+  "theme_color": "#FFCC00"
+}
