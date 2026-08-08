@@ -24,19 +24,18 @@
 body {
     background: var(--bg-gradient);
     color: var(--text-main);
-    height: 100vh; /* Fallback */
-    height: 100dvh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
-    align-items: center;
-    overflow: hidden;
+    align-items: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .app-container {
     width: 100%;
     max-width: 450px;
-    height: 100vh; /* Fallback */
-    height: 100dvh;
+    min-height: 100dvh;
     background: var(--bg-gradient);
     display: flex;
     flex-direction: column;
