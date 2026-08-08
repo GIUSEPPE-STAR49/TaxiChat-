@@ -24,7 +24,8 @@
 body {
     background: var(--bg-gradient);
     color: var(--text-main);
-    height: 100vh;
+    height: 100vh; /* Fallback */
+    height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -34,7 +35,8 @@ body {
 .app-container {
     width: 100%;
     max-width: 450px;
-    height: 100vh;
+    height: 100vh; /* Fallback */
+    height: 100dvh;
     background: var(--bg-gradient);
     display: flex;
     flex-direction: column;
@@ -252,7 +254,7 @@ button:hover {
 
 /* Input Area */
 .input-area {
-    padding: 15px 0 0 0;
+    padding: 15px 0 25px 0; /* Aggiunto spazio in basso per la barra del telefono */
     display: flex;
     gap: 10px;
     background: var(--bg-gradient);
