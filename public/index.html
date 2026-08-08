@@ -29,7 +29,7 @@
 
                 <div id="shareBox" class="share-link-box">
                     <p>Fai inquadrare questo Codice QR al cliente (se è con te in auto):</p>
-                    <img id="qrCode" src="" alt="QR Code" style="display:block; margin: 0 auto 15px auto; border-radius: 8px;">
+                    <img id="qrCode" src="" alt="QR Code" style="display:block; margin: 0 auto 10px auto; border-radius: 8px; max-width: 150px; height: auto;">
                     <p style="font-size: 0.8rem; margin-bottom: 5px;">Se devi rintracciarlo (non è in auto):</p>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <button id="waBtn" class="btn-whatsapp">Invia su WhatsApp</button>
@@ -93,7 +93,7 @@
             
             // Genera QR Code
             const qrImg = document.getElementById('qrCode');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(chatUrl)}`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(chatUrl)}`;
 
             // Prepara bottone WhatsApp con messaggio bilingue
             const testobilingue = `🚕 Ciao! Sono il tuo Tassista. Clicca qui per comunicare. \n🇬🇧 Hello! I am your Taxi Driver. Click here to chat with me in your language:\n\n${chatUrl}`;
