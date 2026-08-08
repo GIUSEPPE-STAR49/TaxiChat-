@@ -24,10 +24,14 @@
                 <button id="createChatBtn">Crea Nuova Chat</button>
 
                 <div id="shareBox" class="share-link-box">
-                    <p>Fai inquadrare questo Codice QR al cliente:</p>
+                    <p>Fai inquadrare questo Codice QR al cliente (se è con te in auto):</p>
                     <img id="qrCode" src="" alt="QR Code" style="display:block; margin: 0 auto 15px auto; border-radius: 8px;">
-                    <p style="font-size: 0.8rem; margin-bottom: 5px;">Oppure invia il link su WhatsApp:</p>
-                    <button id="waBtn" class="btn-whatsapp">Invia su WhatsApp</button>
+                    <p style="font-size: 0.8rem; margin-bottom: 5px;">Se devi rintracciarlo (non è in auto):</p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button id="waBtn" class="btn-whatsapp">Invia su WhatsApp</button>
+                        <button id="smsBtn" class="btn-secondary" style="background: #007AFF; color: white;">Invia per SMS</button>
+                        <button id="copyBtn" class="btn-secondary">Copia Link</button>
+                    </div>
                     <button id="enterChatBtn" class="btn-secondary" style="margin-top: 10px;">Entra nella Chat</button>
                 </div>
             </div>
@@ -62,6 +66,8 @@
         const shareBox = document.getElementById('shareBox');
         const linkDisplay = document.getElementById('linkDisplay');
         const waBtn = document.getElementById('waBtn');
+        const smsBtn = document.getElementById('smsBtn');
+        const copyBtn = document.getElementById('copyBtn');
         const enterChatBtn = document.getElementById('enterChatBtn');
         const chatBox = document.getElementById('chatBox');
         const chatForm = document.getElementById('chatForm');
@@ -86,10 +92,26 @@
             qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(chatUrl)}`;
 
             // Prepara bottone WhatsApp con messaggio bilingue
-            const waTesto = `🚕 Ciao! Sono il tuo Tassista. Clicca qui per comunicare. \n🇬🇧 Hello! I am your Taxi Driver. Click here to chat with me in your language:\n\n${chatUrl}`;
-            const waText = encodeURIComponent(waTesto);
+            const testobilingue = `🚕 Ciao! Sono il tuo Tassista. Clicca qui per comunicare. \n🇬🇧 Hello! I am your Taxi Driver. Click here to chat with me in your language:\n\n${chatUrl}`;
+            
             waBtn.onclick = () => {
-                window.open(`https://wa.me/?text=${waText}`, '_blank');
+                window.open(`https://wa.me/?text=${encodeURIComponent(testobilingue)}`, '_blank');
+            };
+
+            // Prepara bottone SMS
+            smsBtn.onclick = () => {
+                // Su Android e iOS per precompilare il testo si usa ?body= (o &body= su vecchi iOS)
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const separator = isIOS ? '&' : '?';
+                window.location.href = `sms:${separator}body=${encodeURIComponent(testobilingue)}`;
+            };
+
+            // Prepara bottone Copia
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(testobilingue).then(() => {
+                    copyBtn.innerText = "Copiato!";
+                    setTimeout(() => copyBtn.innerText = "Copia Link", 2000);
+                });
             };
         });
 
