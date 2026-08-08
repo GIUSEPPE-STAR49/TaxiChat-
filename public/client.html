@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TaxiChat</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Taxi<span>Chat</span></h1>
+            <div class="subtitle" id="langDisplay">Auto-translating...</div>
+        </header>
+
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="screen active">
+            <div class="dashboard-content">
+                <div class="pulse-circle">💬</div>
+                <h2 id="loadingText">Connecting to your driver...</h2>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chatScreen" class="screen">
+            <div id="status" style="text-align:center; font-size: 0.8rem; color: #25D366; margin-bottom:10px;">Connected securely.</div>
+            
+            <div class="chat-container" id="chatBox">
+                <!-- Messages -->
+            </div>
+
+            <form class="input-area" id="chatForm">
+                <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" required>
+                <button type="submit" class="send-btn">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        // Estrarre roomId dall'URL (es. /chat/A1B2C3)
+        const roomId = window.location.pathname.split('/').pop().toUpperCase();
+        
+        // Rileva la lingua del telefono in automatico, o forza con ?lang=en nell'URL per i test
+        const urlParams = new URLSearchParams(window.location.search);
+        const userLang = urlParams.get('lang') || navigator.language || navigator.userLanguage || 'en-US';
+        const shortLang = userLang.split('-')[0].toUpperCase();
+        const myRole = 'client';
+
+        const loadingScreen = document.getElementById('loadingScreen');
+        const chatScreen = document.getElementById('chatScreen');
+        const loadingText = document.getElementById('loadingText');
+        const chatBox = document.getElementById('chatBox');
+        const chatForm = document.getElementById('chatForm');
+        const msgInput = document.getElementById('msgInput');
+        const langDisplay = document.getElementById('langDisplay');
+
+        langDisplay.innerText = `Language: ${shortLang}`;
+
+        // Join the room
+        if(roomId) {
+            socket.emit('join_client', { roomId, lang: userLang });
+        } else {
+            loadingText.innerText = "Invalid link.";
+            loadingText.style.color = "red";
+        }
+
+        socket.on('joined_success', () => {
+            loadingScreen.classList.remove('active');
+            chatScreen.classList.add('active');
+        });
+
+        socket.on('error', (msg) => {
+            loadingText.innerText = msg;
+            loadingText.style.color = "red";
+        });
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = msgInput.value.trim();
+            if (!text || !roomId) return;
+            
+            // Aggiungo subito il mio messaggio a schermo
+            appendMessage(text, null, 'mine');
+            
+            socket.emit('send_message', { roomId, text, role: myRole });
+            msgInput.value = '';
+        });
+
+        socket.on('receive_message', (data) => {
+            // Se sono io (client), non stampo il mio (già fatto al submit)
+            if (data.sender === myRole) return;
+            
+            // Messaggio del driver
+            // Lui scrive in italiano, io vedo la traduzione
+            appendMessage(data.translated, data.original, 'theirs');
+        });
+
+        function appendMessage(mainText, subText, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            
+            let html = `<div class="bubble">${mainText}`;
+            if(subText && subText !== mainText) {
+                html += `<div class="original-text">${subText}</div>`;
+            }
+            html += `</div>`;
+            
+            div.innerHTML = html;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
