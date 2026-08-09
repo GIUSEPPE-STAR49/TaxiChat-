@@ -32,6 +32,7 @@
                     <img id="qrCode" src="" alt="QR Code" style="display:block; margin: 0 auto 10px auto; border-radius: 8px; max-width: 150px; height: auto;">
                     <p style="font-size: 0.8rem; margin-bottom: 5px;">Se devi rintracciarlo (non è in auto):</p>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="tel" id="phoneNumberInput" placeholder="Inserisci numero (es. 339...)" style="padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; text-align: center; margin-bottom: 5px;" autocomplete="off">
                         <button id="waBtn" class="btn-whatsapp">Invia su WhatsApp</button>
                         <div style="display: flex; gap: 8px;">
                             <button id="smsBtn" class="btn-secondary" style="background: #007AFF; color: white; flex: 1; font-size: 1rem; padding: 12px;">SMS</button>
@@ -101,15 +102,24 @@
             const testobilingue = `🚕 Ciao! Sono il tuo Tassista. Clicca qui per comunicare. \n🇬🇧 Hello! I am your Taxi Driver. Click here to chat with me in your language:\n\n${chatUrl}`;
             
             waBtn.onclick = () => {
-                window.open(`https://wa.me/?text=${encodeURIComponent(testobilingue)}`, '_blank');
+                const phoneInput = document.getElementById('phoneNumberInput').value.trim();
+                let waUrl = `https://wa.me/`;
+                if(phoneInput) {
+                    let cleanPhone = phoneInput.replace(/\D/g, ''); // Rimuovi tutto tranne i numeri
+                    if(cleanPhone.length <= 10) cleanPhone = '39' + cleanPhone; // Aggiungi +39 se manca
+                    waUrl += `${cleanPhone}`;
+                }
+                window.open(`${waUrl}?text=${encodeURIComponent(testobilingue)}`, '_blank');
             };
 
             // Prepara bottone SMS
             smsBtn.onclick = () => {
+                const phoneInput = document.getElementById('phoneNumberInput').value.trim();
+                let cleanPhone = phoneInput ? phoneInput.replace(/\D/g, '') : '';
                 // Su Android e iOS per precompilare il testo si usa ?body= (o &body= su vecchi iOS)
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 const separator = isIOS ? '&' : '?';
-                window.location.href = `sms:${separator}body=${encodeURIComponent(testobilingue)}`;
+                window.location.href = `sms:${cleanPhone}${separator}body=${encodeURIComponent(testobilingue)}`;
             };
 
             // Prepara bottone Copia
