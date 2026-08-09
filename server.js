@@ -46,6 +46,16 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Handle reconnections when browser goes to background and comes back
+    socket.on('rejoin_room', ({ roomId, role }) => {
+        const id = roomId ? roomId.toUpperCase() : null;
+        if (id && rooms[id]) {
+            socket.join(id);
+            if (role === 'driver') rooms[id].driver = socket.id;
+            if (role === 'client') rooms[id].client = socket.id;
+        }
+    });
+
     // Handle messages
     socket.on('send_message', async ({ roomId, text, role }) => {
         const id = roomId.toUpperCase();
