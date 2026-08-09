@@ -56,6 +56,13 @@
         const shortLang = userLang.split('-')[0].toUpperCase();
         const myRole = 'client';
 
+        // Riconnessione automatica per quando il browser va in background sui cellulari
+        socket.on('connect', () => {
+            if (roomId) {
+                socket.emit('rejoin_room', { roomId: roomId, role: myRole });
+            }
+        });
+
         const loadingScreen = document.getElementById('loadingScreen');
         const chatScreen = document.getElementById('chatScreen');
         const loadingText = document.getElementById('loadingText');
