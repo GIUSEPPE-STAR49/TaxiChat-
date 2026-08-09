@@ -67,6 +67,13 @@
         let currentRoom = null;
         const myRole = 'driver';
 
+        // Riconnessione automatica per quando il browser va in background sui cellulari
+        socket.on('connect', () => {
+            if (currentRoom) {
+                socket.emit('rejoin_room', { roomId: currentRoom, role: myRole });
+            }
+        });
+
         const dashboard = document.getElementById('dashboard');
         const chatScreen = document.getElementById('chatScreen');
         const createChatBtn = document.getElementById('createChatBtn');
