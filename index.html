@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="it" translate="no">
+<head>
+    <meta name="google" content="notranslate">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.json">
+    <title>TaxiChat - Driver</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Taxi<span>Chat</span></h1>
+            <div class="subtitle">Driver Dashboard (Italiano)</div>
+        </header>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboard" class="screen active">
+            <div class="dashboard-content">
+                <div class="pulse-circle">🚕</div>
+                <h2>Pronto per una nuova corsa?</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Crea una chat istantanea. Il cliente vedrà i messaggi nella sua lingua madre, tu li vedrai in italiano.</p>
+                
+                <button id="createChatBtn">Crea Nuova Chat</button>
+
+                <div id="shareBox" class="share-link-box">
+                    <p>Fai inquadrare questo Codice QR al cliente (se è con te in auto):</p>
+                    <img id="qrCode" src="" alt="QR Code" style="display:block; margin: 0 auto 10px auto; border-radius: 8px; max-width: 150px; height: auto;">
+                    <p style="font-size: 0.8rem; margin-bottom: 5px;">Se devi rintracciarlo (non è in auto):</p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="tel" id="phoneNumberInput" placeholder="Inserisci numero (es. 339...)" style="padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; text-align: center; margin-bottom: 5px;" autocomplete="off">
+                        <button id="waBtn" class="btn-whatsapp">Invia su WhatsApp</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="smsBtn" class="btn-secondary" style="background: #007AFF; color: white; flex: 1; font-size: 1rem; padding: 12px;">SMS</button>
+                            <button id="copyBtn" class="btn-secondary" style="flex: 1; font-size: 1rem; padding: 12px;">Copia</button>
+                        </div>
+                    </div>
+                    <button id="enterChatBtn" class="btn-secondary" style="margin-top: 10px;">Entra nella Chat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chatScreen" class="screen">
+            <div id="status" style="text-align:center; font-size: 0.8rem; color: var(--text-muted); margin-bottom:10px;">In attesa del cliente...</div>
+            
+            <div class="chat-container" id="chatBox">
+                <!-- Messaggi appariranno qui -->
+            </div>
+
+            <form class="input-area" id="chatForm">
+                <input type="text" id="msgInput" placeholder="Scrivi in italiano..." autocomplete="off" required>
+                <button type="submit" class="send-btn">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentRoom = null;
+        const myRole = 'driver';
+
+        // Riconnessione automatica per quando il browser va in background sui cellulari
+        socket.on('connect', () => {
+            if (currentRoom) {
+                socket.emit('rejoin_room', { roomId: currentRoom, role: myRole });
+            }
+        });
+
+        const dashboard = document.getElementById('dashboard');
+        const chatScreen = document.getElementById('chatScreen');
+        const createChatBtn = document.getElementById('createChatBtn');
+        const shareBox = document.getElementById('shareBox');
+        const linkDisplay = document.getElementById('linkDisplay');
+        const waBtn = document.getElementById('waBtn');
+        const smsBtn = document.getElementById('smsBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const enterChatBtn = document.getElementById('enterChatBtn');
+        const chatBox = document.getElementById('chatBox');
+        const chatForm = document.getElementById('chatForm');
+        const msgInput = document.getElementById('msgInput');
+        const statusDiv = document.getElementById('status');
+
+        createChatBtn.addEventListener('click', () => {
+            createChatBtn.disabled = true;
+            createChatBtn.innerText = "Creazione in corso...";
+            socket.emit('join_driver');
+        });
+
+        socket.on('room_created', (roomId) => {
+            currentRoom = roomId;
+            createChatBtn.style.display = 'none';
+            shareBox.style.display = 'block';
+            
+            const chatUrl = `${window.location.origin}/chat/${roomId}`;
+            
+            // Genera QR Code
+            const qrImg = document.getElementById('qrCode');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(chatUrl)}`;
+
+            // Prepara bottone WhatsApp con messaggio bilingue
+            const testobilingue = `🚕 Ciao! Sono il tuo Tassista. Clicca qui per comunicare. \n🇬🇧 Hello! I am your Taxi Driver. Click here to chat with me in your language:\n\n${chatUrl}`;
+            
+            waBtn.onclick = () => {
+                const phoneInput = document.getElementById('phoneNumberInput').value.trim();
+                let waUrl = `https://wa.me/`;
+                if(phoneInput) {
+                    let cleanPhone = phoneInput.replace(/\D/g, ''); // Rimuovi tutto tranne i numeri
+                    if(cleanPhone.length <= 10) cleanPhone = '39' + cleanPhone; // Aggiungi +39 se manca
+                    waUrl += `${cleanPhone}`;
+                }
+                window.open(`${waUrl}?text=${encodeURIComponent(testobilingue)}`, '_blank');
+            };
+
+            // Prepara bottone SMS
+            smsBtn.onclick = () => {
+                const phoneInput = document.getElementById('phoneNumberInput').value.trim();
+                let cleanPhone = phoneInput ? phoneInput.replace(/\D/g, '') : '';
+                // Su Android e iOS per precompilare il testo si usa ?body= (o &body= su vecchi iOS)
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const separator = isIOS ? '&' : '?';
+                window.location.href = `sms:${cleanPhone}${separator}body=${encodeURIComponent(testobilingue)}`;
+            };
+
+            // Prepara bottone Copia
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(testobilingue).then(() => {
+                    copyBtn.innerText = "Copiato!";
+                    setTimeout(() => copyBtn.innerText = "Copia Link", 2000);
+                });
+            };
+        });
+
+        enterChatBtn.addEventListener('click', () => {
+            dashboard.classList.remove('active');
+            chatScreen.classList.add('active');
+        });
+
+        socket.on('client_joined', (data) => {
+            statusDiv.innerText = `Cliente collegato! (Lingua: ${data.lang})`;
+            statusDiv.style.color = '#25D366';
+            
+            // Messaggio automatico di benvenuto
+            const welcomeMsg = "Ciao! Sono il tuo tassista. Scrivimi pure qui.";
+            appendMessage(welcomeMsg, null, 'mine');
+            socket.emit('send_message', { roomId: currentRoom, text: welcomeMsg, role: myRole });
+        });
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = msgInput.value.trim();
+            if (!text || !currentRoom) return;
+            
+            // Add my message to screen immediately
+            appendMessage(text, null, 'mine');
+            
+            socket.emit('send_message', { roomId: currentRoom, text, role: myRole });
+            msgInput.value = '';
+        });
+
+        socket.on('receive_message', (data) => {
+            // Se sono io (driver), non stampo di nuovo il mio messaggio (l'ho già fatto al submit)
+            if (data.sender === myRole) return;
+            
+            // Messaggio del cliente
+            // Lui scrive nella sua lingua, io vedo la traduzione
+            appendMessage(data.translated, data.original, 'theirs');
+        });
+
+        function appendMessage(mainText, subText, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            
+            let html = `<div class="bubble">${mainText}`;
+            if(subText && subText !== mainText) {
+                html += `<div class="original-text">${subText}</div>`;
+            }
+            html += `</div>`;
+            
+            div.innerHTML = html;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
